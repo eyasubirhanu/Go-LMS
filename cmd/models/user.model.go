@@ -13,10 +13,13 @@ const (
 // User struct for users table
 type User struct {
 	utils.Base
-	Email                  string `gorm:"type:varchar(100);unique_index" `
-	PasswordSalt           string
-	PasswordHash           []byte
+	Email        string `gorm:"type:varchar(100);unique_index" `
+	PasswordSalt string
+	PasswordHash []byte
+	// Password               string `gorm:"not null"`
 	Role                   int
+	VerificationCode       string `json:"verification_code"`
+	Verified               bool   `gorm:"not null"`
 	SiginInCount           int
 	CurrentSignInAt        *time.Time
 	LastSignInAt           *time.Time
@@ -83,6 +86,14 @@ func (u *User) Create() error {
 	return nil
 }
 
+func (u *User) Save() error {
+	if handler == nil {
+		return errHandlerNotSet
+	}
+	err := handler.Save(u).Error
+	return err
+}
+
 // FetchByID fetches User by id
 func (u *User) FetchByID() error {
 	if handler == nil {
@@ -106,6 +117,18 @@ func (u *User) FetchByEmail() error {
 		return err
 	}
 
+	return nil
+}
+
+// FetchByVerificationCode fetches User by VerificationCode
+func (u *User) FetchByVerificationCode() error {
+	if handler == nil {
+		return errHandlerNotSet
+	}
+	err := handler.Where("verification_code = ?", u.VerificationCode).First(&u).Error
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
